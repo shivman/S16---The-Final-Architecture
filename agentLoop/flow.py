@@ -191,54 +191,55 @@ class AgentLoop4:
                     **({"iteration_context": iteration_context} if iteration_context else {})
                 }
 
-        # Execute first iteration
-        agent_input = build_agent_input()
-        result = await self.agent_runner.run_agent(agent_type, agent_input)
+        iterations_data = []
+        current_output = None
+        iteration = 0
+        max_iterations = 4
+        success = True
+        error = None
         
-        if result["success"]:
-            output = result["output"]
+        while iteration < max_iterations:
+            iteration += 1
             
-            # Check for call_self
-            if output.get("call_self"):
-                # Handle code execution if needed
-                if context._has_executable_code(output):
-                    execution_result = await context._auto_execute_code(step_id, output)
-                    if execution_result.get("status") == "success":
-                        execution_data = execution_result.get("result", {})
-                        inputs = {**inputs, **execution_data}  # Update inputs for iteration 2
-                
-                # Execute second iteration with consistent input structure
-                second_agent_input = build_agent_input(
-                    instruction=output.get("next_instruction", "Continue the task"),
-                    previous_output=output,
-                    iteration_context=output.get("iteration_context", {})
-                )
-                
-                second_result = await self.agent_runner.run_agent(agent_type, second_agent_input)
-                
-                # 💾 CRITICAL: Store iteration data in session
-                iterations_data = [
-                    {"iteration": 1, "output": output}
-                ]
-                
-                if second_result["success"]:
-                    iterations_data.append({"iteration": 2, "output": second_result["output"]})
-                    final_result = second_result
-                else:
-                    iterations_data.append(None)
-                    final_result = result
-                
-                # Store iterations in the node data for session persistence
-                step_data = context.get_step_data(step_id)
-                step_data['iterations'] = iterations_data
-                step_data['call_self_used'] = True
-                step_data['final_iteration_output'] = final_result["output"]
-                
-                return final_result
-            else:
-                return result
+            agent_input = build_agent_input(
+                instruction=current_output.get("next_instruction") if current_output else step_data.get("agent_prompt", step_data["description"]),
+                previous_output=current_output,
+                iteration_context=current_output.get("iteration_context") if current_output else None
+            )
+            
+            result = await self.agent_runner.run_agent(agent_type, agent_input)
+            
+            if not result["success"]:
+                success = False
+                error = result["error"]
+                break
+            
+            current_output = result["output"]
+            iterations_data.append({"iteration": iteration, "output": current_output})
+            
+            # Handle code execution if needed
+            if context._has_executable_code(current_output):
+                execution_result = await context._auto_execute_code(step_id, current_output)
+                if execution_result.get("status") == "success":
+                    execution_data = execution_result.get("result", {})
+                    inputs = {**inputs, **execution_data}
+            
+            if not current_output.get("call_self", False):
+                break
+            
+            log_step(f"Self-call triggered for agent {agent_type} in step {step_id}, iteration {iteration}")
+        
+        if success:
+            final_result = {"success": True, "output": current_output}
         else:
-            return result
+            final_result = {"success": False, "error": error}
+        
+        # 💾 CRITICAL: Store iteration data in session
+        step_data['iterations'] = iterations_data
+        step_data['call_self_used'] = len(iterations_data) > 1
+        step_data['final_iteration_output'] = current_output if success else None
+        
+        return final_result
 
     async def _handle_failures(self, context):
         """Handle failures via mid-session replanning"""

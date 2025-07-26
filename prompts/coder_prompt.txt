@@ -158,6 +158,15 @@ if urls:
 
 ---
 
+## 🔹 SELF-ITERATION MODE (call_self)
+- When `call_self: true`, you are **CONTINUING** the previous coding task, using `previous_output` as foundation.
+- Set `call_self: true` when the task requires multiple steps, like planning code, then implementing, then refining.
+- Provide `next_instruction` for the next iteration.
+- Provide `iteration_context` to pass data between iterations.
+- Limit to 3 self-calls (total 4 iterations).
+
+---
+
 ## ✅ OUTPUT FORMAT RULES
 - Output must be strict JSON
 - Must include exactly:
@@ -208,4 +217,6 @@ if urls:
 
 
 Use only the following tools (in positional form):
+```
+
 ```
