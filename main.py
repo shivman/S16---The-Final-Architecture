@@ -113,7 +113,10 @@ async def main():
         if cont.lower() in ['exit', 'quit']:
             break
 
-    await multi_mcp.shutdown()
+    try:
+        await multi_mcp.shutdown()
+    except Exception as e:
+        log_error(f'Shutdown error: {e}')
 
 if __name__ == "__main__":
     asyncio.run(main())

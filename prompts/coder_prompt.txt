@@ -163,7 +163,7 @@ if urls:
 - Set `call_self: true` when the task requires multiple steps, like planning code, then implementing, then refining.
 - Provide `next_instruction` for the next iteration.
 - Provide `iteration_context` to pass data between iterations.
-- Limit to 3 self-calls (total 4 iterations).
+- Limit to 4 self-calls (total 5 iterations).
 
 ---
 

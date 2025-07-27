@@ -180,6 +180,22 @@ class AgentLoop4:
                     **({"previous_output": previous_output} if previous_output else {}),
                     **({"iteration_context": iteration_context} if iteration_context else {})
                 }
+            elif agent_type == "CoderAgent":
+                return {
+                    "step_id": step_id,
+                    "agent_prompt": instruction or step_data.get("agent_prompt", step_data["description"]),
+                    "reads": step_data.get("reads", []),
+                    "writes": step_data.get("writes", []),
+                    "inputs": inputs,
+                    "original_query": context.plan_graph.graph['original_query'],
+                    "session_context": {
+                        "session_id": context.plan_graph.graph['session_id'],
+                        "created_at": context.plan_graph.graph['created_at'],
+                        "file_manifest": context.plan_graph.graph['file_manifest']
+                    },
+                    **({"previous_output": previous_output} if previous_output else {}),
+                    **({"iteration_context": iteration_context} if iteration_context else {})
+                }
             else:
                 return {
                     "step_id": step_id,
@@ -228,6 +244,7 @@ class AgentLoop4:
                 break
             
             log_step(f"Self-call triggered for agent {agent_type} in step {step_id}, iteration {iteration}")
+            log_step(f"Self-call details: Iteration {iteration}, Next Instruction: {current_output.get('next_instruction', 'N/A')}")
         
         if success:
             final_result = {"success": True, "output": current_output}

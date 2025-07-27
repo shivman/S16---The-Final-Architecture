@@ -12,6 +12,7 @@ async def execute_step(step_id, code, ctx, session, multi_mcp, variant_used: str
     try:
         result = await run_user_code(code, multi_mcp, ctx.session_id)
 
+        """
         if session:
             session.add_execution_snapshot(
                 ExecutionSnapshot(
@@ -26,6 +27,7 @@ async def execute_step(step_id, code, ctx, session, multi_mcp, variant_used: str
                     total_time=result.get("total_time", ""),
                 )
             )
+        """
     except Exception as e:
         result = {"status": "error", "error": str(e)}
 

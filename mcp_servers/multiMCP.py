@@ -201,8 +201,20 @@ class MultiMCP:
 
     async def shutdown(self):
         for client in self.client_cache.values():
-            if client.session:
-                await client.session.__aexit__(None, None, None)
-            if client.session_context:
-                await client.session_context.__aexit__(None, None, None)
+            try:
+                if client.session:
+                    await client.session.__aexit__(None, None, None)
+            except RuntimeError as e:
+                if 'cancel scope' in str(e):
+                    pass  # Ignore known anyio cancel scope errors
+                else:
+                    raise
+            try:
+                if client.session_context:
+                    await client.session_context.__aexit__(None, None, None)
+            except RuntimeError as e:
+                if 'cancel scope' in str(e):
+                    pass  # Ignore known anyio cancel scope errors
+                else:
+                    raise
 

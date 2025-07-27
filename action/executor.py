@@ -10,7 +10,6 @@ from datetime import datetime
 from pathlib import Path
 import traceback
 from utils.utils import log_json_block, log_step, log_error, log_json_block
-from agent.agentSession import ExecutionSnapshot
 
 ALLOWED_MODULES = {
     "math", "random", "re", "datetime", "time", "collections", "itertools",
