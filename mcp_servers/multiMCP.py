@@ -217,4 +217,6 @@ class MultiMCP:
                     pass  # Ignore known anyio cancel scope errors
                 else:
                     raise
+            except asyncio.exceptions.CancelledError:
+                pass  # Ignore task cancellation during shutdown
 
